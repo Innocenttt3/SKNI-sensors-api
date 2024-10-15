@@ -1,69 +1,81 @@
 package skni.kamilG.skin_sensors_api.Controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import skni.kamilG.skin_sensors_api.Model.DateRange;
 import skni.kamilG.skin_sensors_api.Model.Sensor;
 import skni.kamilG.skin_sensors_api.Model.SensorData;
 import skni.kamilG.skin_sensors_api.Service.ISensorService;
 
+import java.awt.print.Pageable;
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
-// TODO skonsultowanie DTO
 @RestController
-@RequestMapping("/api/sensor")
+@RequestMapping("/api/sensors")
+@Validated
 public class SensorController {
+
   private final ISensorService sensorService;
 
-  @Autowired
   public SensorController(ISensorService sensorService) {
     this.sensorService = sensorService;
   }
 
   @GetMapping("/{id}")
-  public Sensor getSensorById(@PathVariable Short id) {
-    return sensorService.getSensorById(id);
+  public ResponseEntity<Sensor> getSensorById(@PathVariable Short id) {
+    return ResponseEntity.ok(sensorService.getSensorById(id));
   }
 
-  @GetMapping("/all")
-  public List<Sensor> getAllSensors() {
-    return sensorService.getAllSensors();
+  @GetMapping
+  public ResponseEntity<List<Sensor>> getAllSensors() {
+    return ResponseEntity.ok(sensorService.getAllSensors());
   }
 
   @GetMapping("/{id}/data")
   public ResponseEntity<List<SensorData>> getSensorDataById(
-      @RequestBody DateRange dataRange, @PathVariable Short id) {
-    Optional<List<SensorData>> sensorData =
-        sensorService.getSensorDataById(id, dataRange.getStart(), dataRange.getEnd());
-    return sensorData
-        .map(data -> ResponseEntity.ok().body(data))
-        .orElseGet(() -> ResponseEntity.noContent().build());
+      @PathVariable Short id,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) @NotNull @PastOrPresent
+          LocalDateTime startDate,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) @NotNull @PastOrPresent
+          LocalDateTime endDate) {
+    return ResponseEntity.ok(sensorService.getSensorDataById(id, startDate, endDate));
   }
 
-  @GetMapping("/all/data")
-  public ResponseEntity<List<SensorData>> getAllSensorData(@RequestParam DateRange dataRange) {
-    Optional<List<SensorData>> sensorsData =
-        sensorService.getAllSensorsData(dataRange.getStart(), dataRange.getEnd());
-    return sensorsData
-        .map(data -> ResponseEntity.ok().body(data))
-        .orElseGet(() -> ResponseEntity.noContent().build());
+  @GetMapping("/data")
+  public ResponseEntity<Page<SensorData>> getAllSensorData(
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) @NotNull @PastOrPresent
+          LocalDateTime startDate,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) @NotNull @PastOrPresent
+          LocalDateTime endDate,
+      @PageableDefault(size = 8, sort = "timestamp", direction = Sort.Direction.DESC)
+          Pageable pageable) {
+    Page<SensorData> sensorDataPage = sensorService.getAllSensorsData(startDate, endDate, pageable);
+    return ResponseEntity.ok(sensorDataPage);
   }
 
-  @GetMapping("/faculty/{facultyName}/all")
+  @GetMapping("/faculty/{facultyName}")
   public List<Sensor> getAllSensorsByFaculty(@PathVariable String facultyName) {
     return sensorService.getSensorsByFaculty(facultyName);
   }
 
-  @GetMapping("/faculty/{facultyName}/all/data")
-  public ResponseEntity<List<SensorData>> getAllSensorsByFacultyData(
-      @RequestParam DateRange dataRange, @PathVariable String facultyName) {
-    Optional<List<SensorData>> sensorsData =
-        sensorService.getSensorsDataByFaculty(
-            facultyName, dataRange.getStart(), dataRange.getEnd());
-    return sensorsData
-        .map(data -> ResponseEntity.ok().body(data))
-        .orElseGet(() -> ResponseEntity.noContent().build());
+  @GetMapping("/faculty/{facultyName}")
+  public ResponseEntity<Page<SensorData>> getAllSensorsByFacultyData(
+      @PathVariable String facultyName,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) @NotNull @PastOrPresent
+          LocalDateTime startDate,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) @NotNull @PastOrPresent
+          LocalDateTime endDate,
+      @PageableDefault(size = 8, sort = "timestamp", direction = Sort.Direction.DESC)
+          Pageable pageable) {
+    Page<SensorData> sensorDataPage =
+        sensorService.getSensorsDataByFaculty(facultyName, startDate, endDate, pageable);
+    return ResponseEntity.ok(sensorDataPage);
   }
 }
