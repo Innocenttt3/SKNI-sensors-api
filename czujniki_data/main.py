@@ -53,7 +53,7 @@ def main_loop(interval):
 
     try:
         while True:
-            for sensor_id in range(1, 6):
+            for sensor_id in range(2, 6):
                 weather_data_json = generate_random_weather_data(sensor_id)
                 insert_weather_data(weather_data_json, schema_name, table_name, cur, conn)
             time.sleep(interval)
