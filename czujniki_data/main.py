@@ -41,11 +41,11 @@ def insert_weather_data(data_json, schema_name, table_name, cur, conn):
 
 def main_loop(interval):
     conn = psycopg2.connect(
-        dbname="kgspring",
+        dbname="mydatabase",
         user="kamil.golawski",
         password=os.getenv('DB_PASSWORD'),
-        host=os.getenv('DB_HOST'),
-        port="5432"
+        host="localhost",
+        port="34250"
     )
     cur = conn.cursor()
     schema_name = "weathergrid"
@@ -53,7 +53,7 @@ def main_loop(interval):
 
     try:
         while True:
-            for sensor_id in range(2, 6):
+            for sensor_id in range(1, 6):
                 weather_data_json = generate_random_weather_data(sensor_id)
                 insert_weather_data(weather_data_json, schema_name, table_name, cur, conn)
             time.sleep(interval)
